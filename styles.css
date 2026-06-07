@@ -319,3 +319,11 @@ settings:
 	overflow: hidden;
 	white-space: nowrap;
 }
+
+.oz-calendar-note-line[draggable="true"] {
+	cursor: grab;
+}
+
+.oz-calendar-note-line-dragging {
+	opacity: 0.5;
+}

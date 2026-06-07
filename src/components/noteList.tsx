@@ -74,6 +74,37 @@ export default function NoteListComponent(params: NoteListComponentParams) {
 		return sortedList;
 	}, [selectedDay, forceValue]);
 
+	const handleDragStart = (e: React.DragEvent<HTMLDivElement>, ozNote: OZNote) => {
+		// Use Obsidian's internal DragManager so the editor's drop handler
+		// recognizes the drag source. Standard HTML5 dataTransfer types alone
+		// (text/plain, text/uri-list) make the browser show the "not allowed"
+		// cursor when dragging into the editor; the editor's drop handler only
+		// preventDefault()s on dragover for drag payloads that went through
+		// dragManager.onDragStart. Reference implementation: brianpetro's
+		// obsidian-smart-connections uses the same pattern.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const dragManager = (plugin.app as any).dragManager;
+		if (dragManager && typeof dragManager.dragLink === 'function') {
+			const wikiLink = `[[${ozNote.displayName}]]`;
+			const dragData = dragManager.dragLink(e.nativeEvent, wikiLink, ozNote.path);
+			dragManager.onDragStart(e.nativeEvent, dragData);
+		} else {
+			// Fallback: standard HTML5 link drag (still needs text/uri-list
+			// for any non-Obsidian target such as the OS file explorer).
+			const obsidianUri = `obsidian://open?vault=${encodeURIComponent(
+				plugin.app.vault.getName()
+			)}&file=${encodeURIComponent(ozNote.path)}`;
+			e.dataTransfer.effectAllowed = 'link';
+			e.dataTransfer.setData('text/uri-list', obsidianUri);
+			e.dataTransfer.setData('text/plain', `[[${ozNote.displayName}]]`);
+		}
+		e.currentTarget.classList.add('oz-calendar-note-line-dragging');
+	};
+
+	const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+		e.currentTarget.classList.remove('oz-calendar-note-line-dragging');
+	};
+
 	const triggerFileContextMenu = (e: React.MouseEvent | React.TouchEvent, filePath: string) => {
 		let abstractFile = plugin.app.vault.getAbstractFileByPath(filePath);
 		if (abstractFile) {
@@ -139,8 +170,11 @@ export default function NoteListComponent(params: NoteListComponentParams) {
 							}
 							id={ozNote.path}
 							key={ozNote.path}
+							draggable={true}
 							onClick={(e) => openFilePath(e, ozNote.path)}
-							onContextMenu={(e) => triggerFileContextMenu(e, ozNote.path)}>
+							onContextMenu={(e) => triggerFileContextMenu(e, ozNote.path)}
+							onDragStart={(e) => handleDragStart(e, ozNote)}
+							onDragEnd={handleDragEnd}>
 							<HiOutlineDocumentText className="oz-calendar-note-line-icon" />
 							<span>{ozNote.displayName}</span>
 						</div>
