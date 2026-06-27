@@ -365,3 +365,7 @@ settings:
 .oz-calendar-plugin-view.fixed .oz-calendar-open-tabs-list {
 	overflow-y: auto;
 }
+
+.oz-calendar-menu-item-delete .menu-item-title {
+	color: var(--text-error);
+}

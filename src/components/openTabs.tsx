@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { TFile } from 'obsidian';
+import { Menu, TFile } from 'obsidian';
 import { HiOutlineDocumentText } from 'react-icons/hi';
 import OZCalendarPlugin from '../main';
-import { openFile } from '../util/utils';
+import { isMouseEvent, openFile } from '../util/utils';
+import { VIEW_TYPE } from '../view';
 
 interface OpenTabNote {
 	displayName: string;
@@ -129,6 +130,32 @@ export default function OpenTabsComponent(params: OpenTabsComponentParams) {
 		}
 	};
 
+	const triggerFileContextMenu = (e: React.MouseEvent | React.TouchEvent, filePath: string) => {
+		let abstractFile = plugin.app.vault.getAbstractFileByPath(filePath);
+		if (abstractFile) {
+			const fileMenu = new Menu();
+			plugin.app.workspace.trigger('file-menu', fileMenu, abstractFile, VIEW_TYPE);
+			fileMenu.addSeparator();
+			fileMenu.addItem((item) => {
+				item.setTitle('删除文件')
+					.setIcon('trash')
+					.onClick(async () => {
+						if (abstractFile) {
+							await plugin.app.vault.trash(abstractFile, false);
+						}
+					});
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(item as any).dom.addClass('oz-calendar-menu-item-delete');
+			});
+			if (isMouseEvent(e)) {
+				fileMenu.showAtPosition({ x: e.pageX, y: e.pageY });
+			} else {
+				// @ts-ignore
+				fileMenu.showAtPosition({ x: e.nativeEvent.locationX, y: e.nativeEvent.locationY });
+			}
+		}
+	};
+
 	useEffect(() => {
 		const onKeyUp = (ev: KeyboardEvent) => {
 			if (!ev.ctrlKey && !ev.metaKey) {
@@ -165,6 +192,7 @@ export default function OpenTabsComponent(params: OpenTabsComponentParams) {
 						key={note.path}
 						draggable={true}
 						onClick={(e) => openFilePath(e, note.path)}
+						onContextMenu={(e) => triggerFileContextMenu(e, note.path)}
 						onMouseEnter={(e) => handleNoteMouseEnter(e, note)}
 						onMouseLeave={handleNoteMouseLeave}
 						onDragStart={(e) => handleDragStart(e, note)}
