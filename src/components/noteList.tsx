@@ -48,6 +48,11 @@ export default function NoteListComponent(params: NoteListComponentParams) {
 				openInNewLeaf = (e.ctrlKey || e.metaKey) && !(e.shiftKey || e.altKey);
 				openInNewTabGroup = (e.ctrlKey || e.metaKey) && (e.shiftKey || e.altKey);
 			}
+			// Ctrl/Cmd click always opens in a new tab, matching the file explorer
+			if (e.ctrlKey || e.metaKey) {
+				openInNewLeaf = true;
+				openInNewTabGroup = false;
+			}
 			// Open the file by using the open file behaviours above
 			openFile({
 				file: abstractFile,

@@ -57,6 +57,11 @@ export default function OpenTabsComponent(params: OpenTabsComponentParams) {
 				openInNewLeaf = (e.ctrlKey || e.metaKey) && !(e.shiftKey || e.altKey);
 				openInNewTabGroup = (e.ctrlKey || e.metaKey) && (e.shiftKey || e.altKey);
 			}
+			// Ctrl/Cmd click always opens in a new tab, matching the file explorer
+			if (e.ctrlKey || e.metaKey) {
+				openInNewLeaf = true;
+				openInNewTabGroup = false;
+			}
 			openFile({
 				file: abstractFile,
 				plugin: plugin,
